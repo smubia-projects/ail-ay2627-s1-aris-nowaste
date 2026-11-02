@@ -4,6 +4,30 @@ NoWaste! is a Telegram-first receipt-to-pantry assistant that helps households p
 
 > NoWaste! predicts freshness priority. It does not determine whether food is safe or unsafe. Storage and handling conditions may change every estimate.
 
+> **AI Lodge showcase.** This fork is deployed as a public web demo by the SMU BIA AI Lodge. What is deployed:
+>
+> * **App** (Next.js: `app/`, `components/`, `lib/`) on Vercel, frontend-only. The pantry lives in this browser's
+>   `localStorage` (`lib/localPantry.ts`), seeded with the original guest-demo groceries; the cookie-based guest demo
+>   became this client state, and the same freshness rules, rescue metrics and Coach / Community demos run on it.
+> * **API** (`server/`, Express bundled with esbuild) on Google Cloud Run: `POST /api/receipts/parse` (receipt photo
+>   in the request body → vision model → the same JSON-schema extraction and zod validation) and
+>   `POST /api/recipes/rescue` (Rescue Pot ingredients → three AI meal ideas, ranked by `lib/recipeRanker.ts`).
+>   Nothing is stored on the server.
+>
+> What changed: OpenAI Responses API → chat completions with structured output, on any OpenAI-compatible gateway
+> (`API_BASE_URL`, `API_KEY`, `MODEL_NAME`, `VISION_MODEL_NAME`; the `OPENAI_*` names still work). The receipt upload
+> now really reads your receipt (the guest demo used canned results), and "Cook with these" in the Rescue Pot asks the
+> AI for recipes on the page (it opened the Telegram bot). Every AI route goes through the AI Lodge rate limit; over
+> the limit the app shows the AI Lodge card and the AI step stops.
+>
+> Not in this version: **Telegram** (bot, webhook, linking), accounts and Supabase, the daily freshness cron and
+> alerts, and USDA enrichment. Their code is kept in `original-supabase/` and `supabase/`, not deployed. The
+> food-safety disclaimers above and in the app footer still apply: freshness priority is an estimate, not a safety
+> judgement.
+>
+> Run locally: `npm install`, `cp .env.example .env` (set `API_KEY`), `npm run dev:server` (API on :8080), then
+> `NEXT_PUBLIC_API_BASE=http://localhost:8080 npm run dev`.
+
 ## Problem and solution
 
 Manual pantry apps demand too much data entry. Receipts already contain most of the inventory, but their abbreviated names are difficult to use. NoWaste! turns that unstructured input into a useful pantry with one photo, then combines transparent storage rules with deterministic risk calculations.
