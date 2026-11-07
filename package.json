@@ -21,12 +21,12 @@
     "date-fns": "4.1.0",
     "express": "^5.3.0",
     "leaflet": "^1.9.4",
-    "next": "16.3.8",
+    "next": "16.4.5",
     "openai": "7.28.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-leaflet": "^5.0.0",
-    "zod": "4.6.5"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.1",
@@ -38,7 +38,7 @@
     "@types/react-dom": "latest",
     "esbuild": "^0.25.12",
     "eslint": "9.39.1",
-    "eslint-config-next": "16.3.8",
+    "eslint-config-next": "16.4.5",
     "tailwindcss": "4.3.3",
     "tsx": "^4.20.0",
     "typescript": "5.9.3",
