@@ -1,21 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { FoodVisual } from "@/components/kitchen/FoodVisual";
 import { getFreshnessVisualState, type KitchenItemData } from "@/lib/foodVisuals";
 import type { StorageMethod } from "@/types/pantry";
-import { updatePantryItem } from "@/lib/pantryActions";
 
-export function ItemDetailModal({ item, onClose, actionsEnabled, onItemAction }: { item: KitchenItemData | null; onClose: () => void; actionsEnabled: boolean; onItemAction?: (action:"consumed"|"frozen"|"discarded",item:KitchenItemData)=>void }) {
-  const router = useRouter(); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
+export function ItemDetailModal({ item, onClose, actionsEnabled, onItemAction, onStorage }: { item: KitchenItemData | null; onClose: () => void; actionsEnabled: boolean; onItemAction?: (action:"consumed"|"frozen"|"discarded",item:KitchenItemData)=>void; onStorage?: (item:KitchenItemData,storage:StorageMethod)=>Promise<void> }) {
+  const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   useEffect(() => { if (!item) return; const key = (e: KeyboardEvent) => e.key === "Escape" && onClose(); document.addEventListener("keydown", key); document.body.style.overflow = "hidden"; return () => { document.removeEventListener("keydown", key); document.body.style.overflow = ""; }; }, [item, onClose]);
   if (!item) return null;
   const visual = getFreshnessVisualState(item.freshness.status);
   async function update(action: string, storageMethod?: StorageMethod) {
     setBusy(true); setError("");
-    try { await updatePantryItem(item!.id, action as "storage", { storageMethod }); }
+    try { if (action === "storage" && storageMethod) await onStorage?.(item!, storageMethod); }
     catch { setError("We couldn't update this item. Please try again."); setBusy(false); return; }
-    setBusy(false); onClose(); router.refresh();
+    setBusy(false); onClose();
   }
   return <div className="modal-backdrop" role="presentation" onMouseDown={(e)=>e.target===e.currentTarget&&onClose()}><section role="dialog" aria-modal="true" aria-labelledby="item-title" className="item-modal">
     <button autoFocus onClick={onClose} className="absolute right-5 top-5 grid size-10 place-items-center rounded-full bg-[#f1f0ea] text-lg font-bold" aria-label="Close item details">×</button>
