@@ -2,8 +2,9 @@
 // (AI Lodge uses apiyi). Config from env only:
 //   API_KEY            required (old name OPENAI_API_KEY still works)
 //   API_BASE_URL       default https://api.apiyi.com/v1 (old name OPENAI_BASE_URL)
-//   MODEL_NAME         text model, rescue recipes (old name OPENAI_MODEL); default deepseek-v4-flash (JSON mode + zod)
-//   VISION_MODEL_NAME  receipt reading (json_schema); default gemini-3.5-flash-lite (DeepSeek has no vision)
+//   MODEL_NAME         text model, rescue recipes (old name OPENAI_MODEL); default deepseek-v4-1-flash-260910 (JSON mode + zod)
+//   VISION_MODEL_NAME  receipt reading (JSON mode + per-item zod); default deepseek-v4-1-flash-260910, which reads images
+//                      (the older deepseek-v4-flash silently ignored them)
 // The original used the OpenAI Responses API (original-supabase/lib/openai.ts).
 import OpenAI from "openai";
 
@@ -24,11 +25,11 @@ export function getAI(): OpenAI {
 }
 
 export function textModel(): string {
-  return process.env.MODEL_NAME?.trim() || process.env.OPENAI_MODEL?.trim() || "deepseek-v4-flash";
+  return process.env.MODEL_NAME?.trim() || process.env.OPENAI_MODEL?.trim() || "deepseek-v4-1-flash-260910";
 }
 
 export function visionModel(): string {
-  return process.env.VISION_MODEL_NAME?.trim() || "gemini-3.5-flash-lite";
+  return process.env.VISION_MODEL_NAME?.trim() || "deepseek-v4-1-flash-260910";
 }
 
 /** The JSON text of a chat-completions reply (some models wrap it in code fences). */

@@ -15,7 +15,8 @@ NoWaste! is a Telegram-first receipt-to-pantry assistant that helps households p
 >   Nothing is stored on the server.
 >
 > What changed: OpenAI Responses API → chat completions with structured output, on any OpenAI-compatible gateway
-> (`API_BASE_URL`, `API_KEY`, `MODEL_NAME`, `VISION_MODEL_NAME`; the `OPENAI_*` names still work). The receipt upload
+> (`API_BASE_URL`, `API_KEY`, `MODEL_NAME`, `VISION_MODEL_NAME`; the `OPENAI_*` names still work). Both
+> `MODEL_NAME` (recipes) and `VISION_MODEL_NAME` (receipts) default to `deepseek-v4-1-flash-260910` on apiyi. The receipt upload
 > now really reads your receipt (the guest demo used canned results), and "Cook with these" in the Rescue Pot asks the
 > AI for recipes on the page (it opened the Telegram bot). Every AI route goes through the AI Lodge rate limit; over
 > the limit the app shows the AI Lodge card and the AI step stops.
