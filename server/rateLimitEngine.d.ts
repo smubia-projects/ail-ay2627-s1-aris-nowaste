@@ -1,6 +1,6 @@
 // Types for the vendored shared engine (rateLimitEngine.js, kept byte-identical to
 // DOCS/shared/rate-limit/engine/node). Do not edit the .js file; update both from the source.
-import type { RequestHandler } from "express";
+import type { Request, RequestHandler } from "express";
 
 export const ENGINE_VERSION: string;
 
@@ -14,3 +14,6 @@ export interface RateLimiterOptions {
 }
 
 export function createRateLimiter(options: RateLimiterOptions): (bucket: string) => RequestHandler;
+
+/** The visitor identity the limiter counts by (client IP from X-Forwarded-For, IPv6 grouped by /64). */
+export function clientIp(req: Request): string;

@@ -1,4 +1,5 @@
-import { createRateLimiter } from "./rateLimitEngine.js";
+import type { Request, RequestHandler, Response } from "express";
+import { clientIp, createRateLimiter } from "./rateLimitEngine.js";
 
 /**
  * Rate-limit adapter: the shared engine (rateLimitEngine.js) with this project's
@@ -20,3 +21,36 @@ const limiter = createRateLimiter({
 
 export const limitReceipt = limiter("receipt");
 export const limitRecipes = limiter("recipes");
+
+/**
+ * Charge a bucket only when the AI step succeeded: the route runs the model first, then calls `charge`, which runs
+ * the limiter and either sends the result or the limiter's 429. A visitor who got a 429 is remembered on this
+ * instance for `holdSeconds`, and `gate` (placed before the model call) answers them with the same 429 without
+ * spending a model call. Used for receipt scans, so a scan the model fails to read doesn't use up a try.
+ */
+export function chargeOnSuccess(limit: RequestHandler, holdSeconds = 600) {
+  const over = new Map<string, { until: number; body: unknown }>();
+  const gate: RequestHandler = (req, res, next) => {
+    const hit = over.get(clientIp(req));
+    if (hit && hit.until > Date.now()) return res.status(429).json(hit.body);
+    next();
+  };
+  const charge = (req: Request, res: Response, send: () => void) => {
+    const ip = clientIp(req);
+    const json = res.json.bind(res);
+    res.json = (body: unknown) => {
+      if (res.statusCode === 429) {
+        if (over.size > 10_000) over.clear();
+        over.set(ip, { until: Date.now() + holdSeconds * 1000, body });
+      }
+      return json(body);
+    };
+    return limit(req, res, () => {
+      res.json = json;
+      send();
+    });
+  };
+  return { gate, charge };
+}
+
+export const receiptCharge = chargeOnSuccess(limitReceipt);

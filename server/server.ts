@@ -3,7 +3,7 @@ import express, { type ErrorRequestHandler, type RequestHandler } from "express"
 import { aiConfigured } from "@/lib/llm";
 import { parseReceiptImage } from "@/lib/receiptParser";
 import { generateRecipes, type PantryRecipeItem } from "@/lib/recipes";
-import { limitReceipt, limitRecipes } from "./rateLimit";
+import { limitRecipes, receiptCharge } from "./rateLimit";
 
 /**
  * NoWaste! API (Cloud Run). API-only and stateless: the Next.js app is on Vercel and keeps the pantry in the
@@ -13,7 +13,8 @@ import { limitReceipt, limitRecipes } from "./rateLimit";
  *   POST /api/receipts/parse  { image }  -> { purchaseDate, extraction }   [receipt]  vision: read + normalise items
  *   POST /api/recipes/rescue  { items }  -> { recipes }                    [recipes]  three ranked rescue meals
  *
- * Each route validates first, then the rate limiter counts the hit, then the model is called.
+ * Each route validates first, then the model is called. Recipes: the rate limiter counts the hit before the model.
+ * Receipts: the hit is counted only after a successful scan (receiptCharge), so an unreadable photo costs no try.
  * (The original ran Next.js routes against Supabase, plus a Telegram bot and a daily cron; see original-supabase/.)
  */
 
@@ -54,12 +55,12 @@ const validReceipt: RequestHandler = (req, res, next) => {
   next();
 };
 
-app.post("/api/receipts/parse", json, validReceipt, needsAi, limitReceipt, async (req, res) => {
+app.post("/api/receipts/parse", json, validReceipt, needsAi, receiptCharge.gate, async (req, res) => {
   try {
     const extraction = await parseReceiptImage(req.body.image);
     if (!extraction.items.length) return res.status(422).json({ error: "No grocery items were found. Try a clearer receipt photo." });
     const purchaseDate = extraction.purchase_date ?? new Date().toISOString().slice(0, 10);
-    return res.json({ purchaseDate, extraction });
+    return receiptCharge.charge(req, res, () => res.json({ purchaseDate, extraction }));
   } catch (error) {
     console.error("Receipt parse failed", error instanceof Error ? error.message : "Unknown error");
     return res.status(502).json({ error: "We couldn't process that receipt. Please try again." });
